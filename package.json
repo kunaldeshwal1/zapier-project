@@ -1,0 +1,8 @@
+{
+    "name": "zapier-repo",
+    "private": true,
+    "workspaces": [
+      "packages/*",
+      "primary-backend"
+    ]
+  }
