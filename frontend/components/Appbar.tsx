@@ -5,7 +5,7 @@ import { PrimaryButton } from "./buttons/PrimaryButton";
 import { useState, useEffect } from "react";
 import { BACKEND_URL } from "@/app/config";
 import axios from "axios";
-
+import Cookies from 'js-cookie';
 export const Appbar = () => {
     const router = useRouter();
     const [name, setName] = useState<string>("none");
@@ -27,6 +27,7 @@ export const Appbar = () => {
             });
             localStorage.removeItem("token");
             localStorage.removeItem("username");
+            Cookies.remove("token");
             router.push("/login");
         } catch (error) {
             console.error("Logout failed:", error);

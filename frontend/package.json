@@ -9,8 +9,10 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@xyflow/react": "^12.5.2",
     "axios": "^1.7.2",
+    "js-cookie": "^3.0.5",
     "next": "14.2.5",
     "react": "^18",
     "react-dom": "^18"

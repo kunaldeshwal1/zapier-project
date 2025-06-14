@@ -10,7 +10,7 @@ const router = Router();
 router.post("/signup", async (req, res): Promise<any> => {
   const body = req.body;
   const parsedData = SignupSchema.safeParse(body);
-  console.log(parsedData.data)
+  console.log("this is parsedata",parsedData.data)
   if (!parsedData.success) {
     return res.status(411).json({
       message: "Data is not in correct format",
