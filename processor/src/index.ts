@@ -6,33 +6,32 @@ const kafka = new Kafka({
   brokers: ["localhost:9092"],
 });
 
-// const consumer = kafka.consumer({ groupId: 'test-group' })
 
 const run = async () => {
   const producer = kafka.producer();
   await producer.connect();
-  
+
   while (1) {
     // Count records first to avoid unnecessary processing
     const count = await prismaClient.zapRunOutbox.count();
-    
+
     if (count === 0) {
       console.log("No pending messages in outbox. Waiting...");
       await new Promise((x) => setTimeout(x, 5000)); // Wait longer when empty
       continue;
     }
-    
+
     const pendingRows = await prismaClient.zapRunOutbox.findMany({
       where: {},
       take: 10,
     });
-    
+
     if (pendingRows.length === 0) {
       console.log("No pending messages found. Waiting...");
       await new Promise((x) => setTimeout(x, 3000));
       continue;
     }
-    
+
     console.log(`Found ${pendingRows.length} messages to process`);
     const messages = pendingRows.map((r) => {
       const value = JSON.stringify({ zapRunId: r.zapRunId, stage: 0 });
@@ -44,13 +43,13 @@ const run = async () => {
       topic: TOPIC_NAME,
       messages,
     });
-    
+
     await prismaClient.zapRunOutbox.deleteMany({
       where: {
         id: { in: pendingRows.map((r) => r.id) },
       },
     });
-    
+
     await new Promise((x) => setTimeout(x, 3000));
   }
 };

@@ -11,7 +11,9 @@
   "description": "",
   "dependencies": {
     "@prisma/client": "^6.4.1",
+    "axios": "^1.10.0",
     "db": "file:../packages/db",
+    "express": "^5.1.0",
     "kafkajs": "^2.2.4",
     "prisma": "^6.4.1"
   }

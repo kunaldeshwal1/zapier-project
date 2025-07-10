@@ -1,10 +1,9 @@
 
-require("dotenv").config(); 
+require("dotenv").config();
 import { Kafka } from "kafkajs";
 import { prismaClient } from "db";
 import { JsonObject } from "@prisma/client/runtime/library";
 import { sendEmail } from "./email";
-
 const TOPIC_NAME = "test-topic";
 const kafka = new Kafka({
   clientId: "outbox-processor",
@@ -19,7 +18,7 @@ async function processMessage(message: any, producer: any) {
   const parsedValue = JSON.parse(message.value?.toString());
   const zapRunId = parsedValue.zapRunId;
   const stage = parsedValue.stage;
-  
+
   const zapRunDetails = await prismaClient.zapRun.findFirst({
     where: {
       id: zapRunId,
@@ -52,8 +51,8 @@ async function processMessage(message: any, producer: any) {
 
   // Process current action
   const zapRunMetadata = zapRunDetails?.metadata;
-  
-  if (currentAction.type.id === "email") {
+
+  if (currentAction.type.id === "send-email") {
     const metadata = zapRunMetadata as JsonObject;
     const to = metadata?.email as string || '';
     const body = metadata?.body as string;
@@ -61,12 +60,7 @@ async function processMessage(message: any, producer: any) {
     await sendEmail(to, body);
   }
 
-  if (currentAction.type.id === "send-sol") {
-    const metadata = zapRunMetadata as JsonObject;
-    const commentObj = metadata?.comment as JsonObject;
-    const amount = commentObj?.amount as string || '';
-    const address = commentObj?.address as string || '';
-    console.log(`Sending SOL: ${amount} to ${address}`);
+  if (currentAction.type.id === "discord-message") {
   }
 
   // Check if there are more actions to process
@@ -89,7 +83,7 @@ async function processMessage(message: any, producer: any) {
 const run = async () => {
   const consumer = kafka.consumer({ groupId: "zap-events-1" });
   const producer = kafka.producer();
-  
+
   try {
     await consumer.connect();
     await producer.connect();
@@ -101,7 +95,7 @@ const run = async () => {
       autoCommit: false,
       eachMessage: async ({ topic, partition, message }) => {
         console.log(`Processing message from offset: ${message.offset}`);
-        
+
         await processMessage(message, producer);
 
         await consumer.commitOffsets([
@@ -111,7 +105,7 @@ const run = async () => {
             offset: (parseInt(message.offset) + 1).toString(),
           },
         ]);
-        
+
         console.log(`Completed processing message from offset: ${message.offset}`);
       },
     });

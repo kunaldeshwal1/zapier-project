@@ -8,8 +8,8 @@
     "dev": "tsc -b --watch"
   },
   "prisma": {
-  "seed": "ts-node prisma/seed.ts"
-},
+    "seed": "ts-node prisma/seed.ts"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
