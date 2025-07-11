@@ -9,6 +9,16 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
+CREATE TABLE "Flow" (
+    "id" TEXT NOT NULL,
+    "node" JSONB NOT NULL,
+    "edge" JSONB NOT NULL,
+    "zapId" TEXT NOT NULL,
+
+    CONSTRAINT "Flow_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Zap" (
     "id" TEXT NOT NULL,
     "triggerId" TEXT NOT NULL,
@@ -22,6 +32,7 @@ CREATE TABLE "Trigger" (
     "id" TEXT NOT NULL,
     "zapId" TEXT NOT NULL,
     "triggerId" TEXT NOT NULL,
+    "name" TEXT NOT NULL DEFAULT 'Unnamed Trigger',
     "metadata" JSONB NOT NULL DEFAULT '{}',
 
     CONSTRAINT "Trigger_pkey" PRIMARY KEY ("id")
@@ -74,10 +85,16 @@ CREATE TABLE "ZapRunOutbox" (
 );
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Flow_zapId_key" ON "Flow"("zapId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Trigger_zapId_key" ON "Trigger"("zapId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "ZapRunOutbox_zapRunId_key" ON "ZapRunOutbox"("zapRunId");
+
+-- AddForeignKey
+ALTER TABLE "Flow" ADD CONSTRAINT "Flow_zapId_fkey" FOREIGN KEY ("zapId") REFERENCES "Zap"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Zap" ADD CONSTRAINT "Zap_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -86,16 +103,16 @@ ALTER TABLE "Zap" ADD CONSTRAINT "Zap_userId_fkey" FOREIGN KEY ("userId") REFERE
 ALTER TABLE "Trigger" ADD CONSTRAINT "Trigger_triggerId_fkey" FOREIGN KEY ("triggerId") REFERENCES "AvailableTrigger"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Trigger" ADD CONSTRAINT "Trigger_zapId_fkey" FOREIGN KEY ("zapId") REFERENCES "Zap"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Trigger" ADD CONSTRAINT "Trigger_zapId_fkey" FOREIGN KEY ("zapId") REFERENCES "Zap"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Action" ADD CONSTRAINT "Action_zapId_fkey" FOREIGN KEY ("zapId") REFERENCES "Zap"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Action" ADD CONSTRAINT "Action_zapId_fkey" FOREIGN KEY ("zapId") REFERENCES "Zap"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Action" ADD CONSTRAINT "Action_actionId_fkey" FOREIGN KEY ("actionId") REFERENCES "AvailableAction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ZapRun" ADD CONSTRAINT "ZapRun_zapId_fkey" FOREIGN KEY ("zapId") REFERENCES "Zap"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "ZapRun" ADD CONSTRAINT "ZapRun_zapId_fkey" FOREIGN KEY ("zapId") REFERENCES "Zap"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "ZapRunOutbox" ADD CONSTRAINT "ZapRunOutbox_zapRunId_fkey" FOREIGN KEY ("zapRunId") REFERENCES "ZapRun"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

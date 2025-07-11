@@ -11,16 +11,6 @@ async function main() {
       image: "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
     },
   });
-
-  await prismaClient.availableTrigger.create({
-    data: {
-      id: "form-submit",
-      name: "Form Submission",
-      image: "https://cdn-icons-png.flaticon.com/512/1077/1077012.png",
-    },
-  });
-
-  // Create Actions
   await prismaClient.availableAction.create({
     data: {
       id: "discord-message",
@@ -37,7 +27,6 @@ async function main() {
     },
   });
 }
-
 main()
   .catch((e) => {
     console.error(e);
