@@ -7,9 +7,9 @@ import { PrimaryButton } from "@/components/buttons/PrimaryButton";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import  { 
+import {
     ReactFlow,
-    Background, 
+    Background,
     Controls,
     Node,
     Edge,
@@ -25,12 +25,12 @@ function useAvailableActionsAndTriggers() {
 
     useEffect(() => {
         axios.get(`${BACKEND_URL}/api/v1/trigger/available`)
-    .then(x => {
-        setAvailableTriggers(x.data.availableTrigger);
-    })
-    .catch(err => {
-        console.error("Error fetching triggers:", err);
-    });
+            .then(x => {
+                setAvailableTriggers(x.data.availableTrigger);
+            })
+            .catch(err => {
+                console.error("Error fetching triggers:", err);
+            });
 
         axios.get(`${BACKEND_URL}/api/v1/action/available`)
             .then(x => {
@@ -43,7 +43,7 @@ function useAvailableActionsAndTriggers() {
     }
 }
 
-export default function() {
+export default function () {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const { availableActions, availableTriggers } = useAvailableActionsAndTriggers();
@@ -84,7 +84,7 @@ export default function() {
             ...nodes.slice(1)
         ]);
     }, [selectedTrigger]);
-    
+
     // Modify your existing actions useEffect
     useEffect(() => {
         const actionNodes = selectedActions.map((action, idx) => ({
@@ -92,9 +92,9 @@ export default function() {
             data: { label: action.availableActionName || 'Action' },
             position: { x: 250, y: (idx + 1) * 100 + 50 },
         }));
-    
+
         setNodes(nodes => [nodes[0], ...actionNodes]); // Keep the trigger node
-    
+
         const newEdges = selectedActions.map((_, idx) => ({
             id: `e${idx}`,
             source: idx === 0 ? '1' : `${idx + 1}`,
@@ -129,43 +129,43 @@ export default function() {
     useEffect(() => {
         const searchParams = new URLSearchParams(window.location.search);
         const zapId = searchParams.get('id');
-        
+
         if (zapId) {
             axios.get(`${BACKEND_URL}/api/v1/zap/${zapId}`, {
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`
                 }
             })
-            .then(response => {
-                const zap = response.data.zap;
-                
-                // Set trigger
-                if (zap.trigger) {
-                    setSelectedTrigger({
-                        id: zap.trigger.triggerId,
-                        name: zap.trigger.type.name
-                    });
-                }
+                .then(response => {
+                    const zap = response.data.zap;
 
-                // Set actions
-                if (zap.actions) {
-                    setSelectedActions(zap.actions.map((action: any, idx: number) => ({
-                        index: idx + 2,
-                        availableActionId: action.actionId,
-                        availableActionName: action.type.name,
-                        metadata: action.metadata
-                    })));
-                }
+                    // Set trigger
+                    if (zap.trigger) {
+                        setSelectedTrigger({
+                            id: zap.trigger.triggerId,
+                            name: zap.trigger.type.name
+                        });
+                    }
 
-                // Set flow data if it exists
-                if (zap.flow) {
-                    setNodes(zap.flow.node);
-                    setEdges(zap.flow.edge);
-                }
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
+                    // Set actions
+                    if (zap.actions) {
+                        setSelectedActions(zap.actions.map((action: any, idx: number) => ({
+                            index: idx + 2,
+                            availableActionId: action.actionId,
+                            availableActionName: action.type.name,
+                            metadata: action.metadata
+                        })));
+                    }
+
+                    // Set flow data if it exists
+                    if (zap.flow) {
+                        setNodes(zap.flow.node);
+                        setEdges(zap.flow.edge);
+                    }
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
         } else {
             setIsLoading(false); // Also set loading to false if there's no zapId
         }
@@ -190,16 +190,16 @@ export default function() {
                         availableActionId: a.availableActionId,
                         actionMetadata: a.metadata
                     })),
-                    flow:{
-                        node:nodes,
-                        edge:edges // Assuming edges are the edges you want to save in the Zap meth
+                    flow: {
+                        node: nodes,
+                        edge: edges // Assuming edges are the edges you want to save in the Zap meth
                     }
                 }, {
                     headers: {
                         Authorization: `Bearer ${localStorage.getItem("token")}`
                     }
                 });
-                
+
                 router.push("/dashboard");
             }}>Publish</PrimaryButton>
         </div>
@@ -225,47 +225,46 @@ export default function() {
                         metadata: {}
                     }])
                 }}>
-                    <div className="text-2xl">+</div>
+                    <div >Add Action</div>
                 </PrimaryButton>
             </div>
         </div>
-        {selectedModalIndex && <Modal 
-            availableItems={selectedModalIndex === 1 ? availableTriggers : availableActions} 
+        {selectedModalIndex && <Modal
+            availableItems={selectedModalIndex === 1 ? availableTriggers : availableActions}
             onSelect={(props: null | { name: string; id: string; metadata: any; }) => {
-            if (props === null) {
+                if (props === null) {
+                    setSelectedModalIndex(null);
+                    return;
+                }
+                if (selectedModalIndex === 1) {
+                    setSelectedTrigger({
+                        id: props.id,
+                        name: props.name
+                    })
+                } else {
+                    setSelectedActions(a => {
+                        let newActions = [...a];
+                        newActions[selectedModalIndex - 2] = {
+                            index: selectedModalIndex,
+                            availableActionId: props.id,
+                            availableActionName: props.name,
+                            metadata: props.metadata
+                        }
+                        return newActions
+                    })
+                }
                 setSelectedModalIndex(null);
-                return;
-            }
-            if (selectedModalIndex === 1) {
-                setSelectedTrigger({
-                    id: props.id,
-                    name: props.name
-                })
-            } else {
-                setSelectedActions(a => {
-                    let newActions = [...a];
-                    newActions[selectedModalIndex - 2] = {
-                        index: selectedModalIndex,
-                        availableActionId: props.id,
-                        availableActionName: props.name,
-                        metadata: props.metadata
-                    }
-                    return newActions
-                })
-            }
-            setSelectedModalIndex(null);
-        }} index={selectedModalIndex} />}
+            }} index={selectedModalIndex} />}
     </div>
 }
 
-function Modal({ index, onSelect, availableItems }: { index: number, onSelect: (props: null | { name: string; id: string; metadata: any; }) => void, availableItems: {id: string, name: string, image: string;}[] }) {
+function Modal({ index, onSelect, availableItems }: { index: number, onSelect: (props: null | { name: string; id: string; metadata: any; }) => void, availableItems: { id: string, name: string, image: string; }[] }) {
     const [step, setStep] = useState(0);
     const [selectedAction, setSelectedAction] = useState<{
         id: string;
         name: string;
     }>();
     const isTrigger = index === 1;
-
     return <div className="fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full bg-slate-100 bg-opacity-70 flex">
         <div className="relative p-4 w-full max-w-2xl max-h-full">
             <div className="relative bg-white rounded-lg shadow ">
@@ -277,45 +276,46 @@ function Modal({ index, onSelect, availableItems }: { index: number, onSelect: (
                         onSelect(null);
                     }} type="button" className="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center" data-modal-hide="default-modal">
                         <svg className="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
                         </svg>
                         <span className="sr-only">Close modal</span>
                     </button>
                 </div>
                 <div className="p-4 md:p-5 space-y-4">
-                    {step === 1 && selectedAction?.id === "email" && <EmailSelector setMetadata={(metadata) => {
+                    {step === 1 && selectedAction?.id === "send-email" && <EmailSelector setMetadata={(metadata) => {
                         onSelect({
                             ...selectedAction,
                             metadata
                         })
                     }} />}
 
-                    {(step === 1 && selectedAction?.id === "send-sol") && <SolanaSelector setMetadata={(metadata) => {
+                    {(step === 1 && selectedAction?.id === "discord-message") && <DiscordSelector setMetadata={(metadata) => {
+                        console.log(metadata)
                         onSelect({
                             ...selectedAction,
                             metadata
                         })
                     }} />}
 
-                    {step === 0 && <div>{availableItems.map(({id, name, image}) => {
-                            return <div onClick={() => {
-                                if (isTrigger) {
-                                    onSelect({
-                                        id,
-                                        name,
-                                        metadata: {}
-                                    })
-                                } else {
-                                    setStep(s => s + 1);
-                                    setSelectedAction({
-                                        id,
-                                        name
-                                    })
-                                }
-                            }} className="flex border p-4 cursor-pointer hover:bg-slate-100">
-                                <img src={image} width={30} className="rounded-full" /> <div className="flex flex-col justify-center"> {name} </div>
-                            </div>
-                        })}</div>}                    
+                    {step === 0 && <div>{availableItems.map(({ id, name, image }) => {
+                        return <div onClick={() => {
+                            if (isTrigger) {
+                                onSelect({
+                                    id,
+                                    name,
+                                    metadata: {}
+                                })
+                            } else {
+                                setStep(s => s + 1);
+                                setSelectedAction({
+                                    id,
+                                    name
+                                })
+                            }
+                        }} className="flex border p-4 cursor-pointer hover:bg-slate-100">
+                            <img src={image} width={30} className="rounded-full" /> <div className="flex flex-col justify-center"> {name} </div>
+                        </div>
+                    })}</div>}
                 </div>
             </div>
         </div>
@@ -323,7 +323,7 @@ function Modal({ index, onSelect, availableItems }: { index: number, onSelect: (
 
 }
 
-function EmailSelector({setMetadata}: {
+function EmailSelector({ setMetadata }: {
     setMetadata: (params: any) => void;
 }) {
     const [email, setEmail] = useState("");
@@ -343,22 +343,18 @@ function EmailSelector({setMetadata}: {
     </div>
 }
 
-function SolanaSelector({setMetadata}: {
+function DiscordSelector({ setMetadata }: {
     setMetadata: (params: any) => void;
 }) {
-    const [amount, setAmount] = useState("");
-    const [address, setAddress] = useState("");    
-
+    const [url, setUrl] = useState("");
     return <div>
-        <Input label={"To"} type={"text"} placeholder="To" onChange={(e) => setAddress(e.target.value)}></Input>
-        <Input label={"Amount"} type={"text"} placeholder="To" onChange={(e) => setAmount(e.target.value)}></Input>
+        <Input label={"Webhook URL"} type={"text"} placeholder="Enter Discord Webhook URL" onChange={(e) => setUrl(e.target.value)}></Input>
         <div className="pt-4">
-        <PrimaryButton onClick={() => {
-            setMetadata({
-                amount,
-                address
-            })
-        }}>Submit</PrimaryButton>
+            <PrimaryButton onClick={() => {
+                setMetadata({
+                    url
+                })
+            }}>Submit</PrimaryButton>
         </div>
     </div>
 }
