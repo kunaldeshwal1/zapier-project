@@ -4,6 +4,7 @@ import { Kafka } from "kafkajs";
 import { prismaClient } from "db";
 import { JsonObject } from "@prisma/client/runtime/library";
 import { sendEmail } from "./email";
+import { sendDiscordMessage } from "./discord";
 const TOPIC_NAME = "test-topic";
 const kafka = new Kafka({
   clientId: "outbox-processor",
@@ -35,6 +36,7 @@ async function processMessage(message: any, producer: any) {
       },
     },
   });
+  console.log("here are zaprun details", zapRunDetails)
   if (!zapRunDetails) {
     console.log(`No zap run found for id: ${zapRunId}`);
     return;
@@ -53,16 +55,51 @@ async function processMessage(message: any, producer: any) {
   const zapRunMetadata = zapRunDetails?.metadata;
 
   if (currentAction.type.id === "send-email") {
-    const metadata = zapRunMetadata as JsonObject;
-    const to = metadata?.email as string || '';
-    const body = metadata?.body as string;
-    console.log(`email is sent to ${to}, body ${body}`)
-    await sendEmail(to, body);
+    try {
+      // Get email from metadata
+      const actionMetadata = currentAction.metadata as JsonObject;
+      const zapRunMetadata = zapRunDetails.metadata as JsonObject;
+
+      const to = (zapRunMetadata?.email || actionMetadata?.email) as string || '';
+      const messageContent = zapRunDetails.message;
+
+      // You can also pass custom template variables from metadata
+      const customName = actionMetadata?.name as string || 'User';
+
+      console.log("Email details:", { to, messageContent });
+
+      if (!to) {
+        console.error("No email address found!");
+        return;
+      }
+
+      console.log(`Sending email to ${to} with message: ${messageContent}`);
+      await sendEmail(to, messageContent);
+    } catch (error) {
+      console.error("Failed to send email:", error);
+    }
   }
 
   if (currentAction.type.id === "discord-message") {
-  }
+    try {
+      // Get webhook URL from zapRun metadata, not action metadata
+      const zapRunMetadata = zapRunDetails.metadata as JsonObject;
+      const webhookUrl = zapRunMetadata?.url as string || '';
+      const messageContent = zapRunDetails.message;
 
+      console.log("Discord webhook URL:", webhookUrl); // This should now show the URL
+
+      if (!webhookUrl || !webhookUrl.startsWith('http')) {
+        console.error("Invalid or missing Discord webhook URL:", webhookUrl);
+        return;
+      }
+
+      console.log(`Sending Discord message: ${messageContent}`);
+      await sendDiscordMessage(webhookUrl, messageContent);
+    } catch (error) {
+      console.error("Failed to send Discord message:", error);
+    }
+  }
   // Check if there are more actions to process
   const lastStage = (zapRunDetails?.zap.actions?.length || 1) - 1;
   if (lastStage !== stage) {

@@ -1,20 +1,26 @@
-import nodemailer from 'nodemailer';
+import { send } from '@emailjs/nodejs';
 
-const transporter = nodemailer.createTransport({
-    host: "sandbox.smtp.mailtrap.io",
-    port: 2525,
-    secure: false, // true for port 465, false for other ports
-    auth: {
-      user: "4fed805b878c91",
-      pass: "5baf0b1e66b554",
-    },
-  });
-  
-export async function sendEmail(to:string,body:string){
-  await transporter.sendMail({
-        from: 'test@gmail.com', // sender address
-        to: to, // list of receivers
-        subject: "Bounty Update ✔", // Subject line
-        text: body
-      });
+export async function sendEmail(to: string, message: string) {
+  const templateParams = {
+    to_email: to,
+    message: message,
+    from_name: 'Zap Automation',
+  };
+
+  try {
+    const response = await send(
+      process.env.EMAILJS_SERVICE_ID!,
+      process.env.EMAILJS_TEMPLATE_ID!,
+      templateParams,
+      {
+        publicKey: process.env.EMAILJS_PUBLIC_KEY!,
+        privateKey: process.env.EMAILJS_PRIVATE_KEY!, // Required for server-side
+      }
+    );
+    console.log('Email sent successfully:', response.status, response.text);
+    return response;
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    throw error;
+  }
 }

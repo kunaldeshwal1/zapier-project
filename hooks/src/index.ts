@@ -10,14 +10,11 @@ app.get("/", (req, res) => {
   });
 });
 
-// https://hooks.zapier.com/hooks/catch/17043103/22b8496/
-// password logic
 app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
   try {
     const userId = req.params.userId;
     const zapId = req.params.zapId;
     const body = req.body;
-
     // store in db a new trigger
     await prismaClient.$transaction(async (tx) => {
       const action = await tx.action.findFirst({
@@ -25,12 +22,13 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
           zapId: zapId
         }
       });
-      
+
       // Then use its metadata in the ZapRun creation:
       const run = await tx.zapRun.create({
         data: {
           zapId: zapId,
           metadata: action?.metadata || {},
+          message: body.message || "No message provided",
         },
       });
 
