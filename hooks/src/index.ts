@@ -16,21 +16,27 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
     const body = req.body;
 
     const githubEvent = req.headers["x-github-event"];
-    const signature = req.headers["x-hub-signature-256"];
 
-    // Check if it's a push event
+    let message = "No message provided";
+
+    // Extract message based on event type
     if (githubEvent === "push") {
-      const payload = req.body;
+      const commits = body.commits || [];
 
-      // Extract commit information
-      const commits = payload.commits;
-      const repository = payload.repository;
-      const pusher = payload.pusher;
+      if (commits.length > 0) {
+        // Get the latest commit message
+        message = commits[commits.length - 1].message;
 
-      console.log(`Push event received for ${repository.name}`);
-      console.log(`Pushed by: ${pusher.name}`);
-      console.log(`Number of commits: ${commits.length}`);
+        // OR get all commit messages
+        // message = commits.map(c => c.message).join(', ');
+
+        // OR get first commit message
+        // message = commits[0].message;
+      }
+
+      console.log(`Extracted message: ${message}`);
     }
+
     await prismaClient.$transaction(async (tx) => {
       const action = await tx.action.findFirst({
         where: {
@@ -38,12 +44,11 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
         },
       });
 
-      // Then use its metadata in the ZapRun creation:
       const run = await tx.zapRun.create({
         data: {
           zapId: zapId,
           metadata: action?.metadata || {},
-          message: body.message || "No message provided",
+          message: message, // This will now have the commit message
         },
       });
 
@@ -53,6 +58,7 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
         },
       });
     });
+
     res.status(200).json({
       message: "Webhook received",
     });
