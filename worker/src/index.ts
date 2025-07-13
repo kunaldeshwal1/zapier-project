@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 import { Kafka } from "kafkajs";
 import { prismaClient } from "db";
@@ -36,7 +35,6 @@ async function processMessage(message: any, producer: any) {
       },
     },
   });
-  console.log("here are zaprun details", zapRunDetails)
   if (!zapRunDetails) {
     console.log(`No zap run found for id: ${zapRunId}`);
     return;
@@ -60,19 +58,13 @@ async function processMessage(message: any, producer: any) {
       const actionMetadata = currentAction.metadata as JsonObject;
       const zapRunMetadata = zapRunDetails.metadata as JsonObject;
 
-      const to = (zapRunMetadata?.email || actionMetadata?.email) as string || '';
-      const messageContent = zapRunDetails.message;
-
-      // You can also pass custom template variables from metadata
-      const customName = actionMetadata?.name as string || 'User';
-
-      console.log("Email details:", { to, messageContent });
-
+      const to =
+        ((zapRunMetadata?.email || actionMetadata?.email) as string) || "";
+      const messageContent = zapRunMetadata?.body as string;
       if (!to) {
         console.error("No email address found!");
         return;
       }
-
       console.log(`Sending email to ${to} with message: ${messageContent}`);
       await sendEmail(to, messageContent);
     } catch (error) {
@@ -84,12 +76,12 @@ async function processMessage(message: any, producer: any) {
     try {
       // Get webhook URL from zapRun metadata, not action metadata
       const zapRunMetadata = zapRunDetails.metadata as JsonObject;
-      const webhookUrl = zapRunMetadata?.url as string || '';
+      const webhookUrl = (zapRunMetadata?.url as string) || "";
       const messageContent = zapRunDetails.message;
 
       console.log("Discord webhook URL:", webhookUrl); // This should now show the URL
 
-      if (!webhookUrl || !webhookUrl.startsWith('http')) {
+      if (!webhookUrl || !webhookUrl.startsWith("http")) {
         console.error("Invalid or missing Discord webhook URL:", webhookUrl);
         return;
       }
@@ -124,7 +116,7 @@ const run = async () => {
   try {
     await consumer.connect();
     await producer.connect();
-    console.log('Consumer and producer connected');
+    console.log("Consumer and producer connected");
 
     await consumer.subscribe({ topic: TOPIC_NAME, fromBeginning: true });
 
@@ -143,28 +135,30 @@ const run = async () => {
           },
         ]);
 
-        console.log(`Completed processing message from offset: ${message.offset}`);
+        console.log(
+          `Completed processing message from offset: ${message.offset}`
+        );
       },
     });
   } catch (error) {
-    console.error('Error in worker:', error);
+    console.error("Error in worker:", error);
   }
 };
 
 // Handle graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('Received SIGTERM. Cleaning up...');
+process.on("SIGTERM", async () => {
+  console.log("Received SIGTERM. Cleaning up...");
   await prismaClient.$disconnect();
   process.exit(0);
 });
 
-process.on('SIGINT', async () => {
-  console.log('Received SIGINT. Cleaning up...');
+process.on("SIGINT", async () => {
+  console.log("Received SIGINT. Cleaning up...");
   await prismaClient.$disconnect();
   process.exit(0);
 });
 
 run().catch((error) => {
-  console.error('Fatal error:', error);
+  console.error("Fatal error:", error);
   process.exit(1);
 });
