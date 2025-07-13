@@ -53,11 +53,14 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
         },
       });
     });
-    res.json({
+    res.status(200).json({
       message: "Webhook received",
     });
   } catch (e) {
-    console.log(e);
+    console.error("Error processing webhook:", e);
+    res.status(500).json({
+      message: "Error processing webhook",
+    });
   }
 });
 
