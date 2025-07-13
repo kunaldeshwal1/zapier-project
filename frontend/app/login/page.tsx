@@ -7,51 +7,72 @@ import axios from "axios";
 import { useState } from "react";
 import { BACKEND_URL } from "../config";
 import { useRouter } from "next/navigation";
+import { HeroVideo } from "@/components/HeroVideo";
 
-export default function() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const router = useRouter();
-    
-    return <div> 
-        <Appbar />
-        <div className="flex justify-center">
-            <div className="flex pt-8 max-w-4xl">
-                <div className="flex-1 pt-20 px-4">
-                    <div className="font-semibold text-3xl pb-4">
-                    Join millions worldwide who automate their work using Zapier.
-                    </div>
-                    <div className="pb-6 pt-4">
-                        <CheckFeature label={"Easy setup, no coding required"} />
-                    </div>
-                    <div className="pb-6">
-                        <CheckFeature label={"Free forever for core features"} />
-                    </div>
-                    <CheckFeature label={"14-day trial of premium features & apps"} />
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const router = useRouter();
 
-                </div>
-                <div className="flex-1 pt-6 pb-6 mt-12 px-4 border rounded">
-                    <Input onChange={e => {
-                        setEmail(e.target.value)
-                    }} label={"Email"} type="text" placeholder="Your Email"></Input>
-                    <Input onChange={e => {
-                        setPassword(e.target.value);
-                    }} label={"Password"} type="password" placeholder="Password"></Input>
-                    <div className="pt-4">
-                        <PrimaryButton onClick={async () => {
-                            const res = await axios.post(`${BACKEND_URL}/api/v1/user/signin`, {
-                                username: email,
-                                password,
-                            });
-                            // Set token in both localStorage and cookies
-                            localStorage.setItem("token", res.data.token);
-                            localStorage.setItem("username", res.data.name);
-                            document.cookie = `token=${res.data.token}; path=/`;
-                            router.push("/dashboard");
-                        }} size="big">Login</PrimaryButton>
-                    </div>
-                </div>
+  const handleLogin = async () => {
+    try {
+      const res = await axios.post(`${BACKEND_URL}/api/v1/user/signin`, {
+        username: email,
+        password,
+      });
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("username", res.data.name);
+      document.cookie = `token=${res.data.token}; path=/`;
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Login failed", err);
+    }
+  };
+
+  return (
+    <div>
+      <Appbar />
+      <div className=" flex justify-center p-6">
+        <div className=" flex flex-col lg:flex-row max-w-5xl w-full gap-8">
+          {/* Left section */}
+          <div className="flex-1 pt-12 px-4">
+            <h2 className="font-semibold text-3xl mb-6">
+              Join millions worldwide who automate their work using Zapier.
+            </h2>
+            <div className="space-y-4 text-gray-700">
+              <CheckFeature label="Easy setup, no coding required" />
+              <CheckFeature label="Free forever for core features" />
+              <CheckFeature label="14-day trial of premium features & apps" />
             </div>
+          </div>
+
+          {/* Right section (form) */}
+          <div className="flex-1 bg-white border rounded-2xl shadow-md p-8">
+            <div className="space-y-4">
+              <Input
+                onChange={(e) => setEmail(e.target.value)}
+                label="Email"
+                type="text"
+                placeholder="Your Email"
+              />
+              <Input
+                onChange={(e) => setPassword(e.target.value)}
+                label="Password"
+                type="password"
+                placeholder="Password"
+              />
+              <div className="pt-2">
+                <PrimaryButton onClick={handleLogin} size="big">
+                  Login
+                </PrimaryButton>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+      <div className="pt-8">
+        <HeroVideo />
+      </div>
     </div>
+  );
 }
