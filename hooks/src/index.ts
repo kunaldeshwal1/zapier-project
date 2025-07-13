@@ -31,7 +31,6 @@ app.post("/hooks/catch/:userId/:zapId", async (req, res) => {
       console.log(`Pushed by: ${pusher.name}`);
       console.log(`Number of commits: ${commits.length}`);
     }
-    // store in db a new trigger
     await prismaClient.$transaction(async (tx) => {
       const action = await tx.action.findFirst({
         where: {
