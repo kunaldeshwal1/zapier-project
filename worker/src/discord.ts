@@ -1,6 +1,5 @@
 import axios from "axios";
 import express from "express";
-
 const app = express();
 app.use(express.json());
 const DISCORD_WEBHOOK_URL =
