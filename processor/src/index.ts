@@ -6,7 +6,6 @@ const kafka = new Kafka({
   brokers: ["localhost:9092"],
 });
 
-
 const run = async () => {
   const producer = kafka.producer();
   await producer.connect();
@@ -49,25 +48,26 @@ const run = async () => {
         id: { in: pendingRows.map((r) => r.id) },
       },
     });
+    console.log("deleted resource");
 
     await new Promise((x) => setTimeout(x, 3000));
   }
 };
 
 // Add graceful shutdown handling
-process.on('SIGTERM', async () => {
-  console.log('Received SIGTERM. Cleaning up...');
+process.on("SIGTERM", async () => {
+  console.log("Received SIGTERM. Cleaning up...");
   await prismaClient.$disconnect();
   process.exit(0);
 });
 
-process.on('SIGINT', async () => {
-  console.log('Received SIGINT. Cleaning up...');
+process.on("SIGINT", async () => {
+  console.log("Received SIGINT. Cleaning up...");
   await prismaClient.$disconnect();
   process.exit(0);
 });
 
 run().catch((error) => {
-  console.error('Fatal error:', error);
+  console.error("Fatal error:", error);
   process.exit(1);
 });
