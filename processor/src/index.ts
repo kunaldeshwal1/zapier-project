@@ -48,7 +48,6 @@ const run = async () => {
         id: { in: pendingRows.map((r) => r.id) },
       },
     });
-    console.log("deleted resource");
 
     await new Promise((x) => setTimeout(x, 3000));
   }

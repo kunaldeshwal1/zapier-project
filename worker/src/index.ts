@@ -18,7 +18,6 @@ async function processMessage(message: any, producer: any) {
   const parsedValue = JSON.parse(message.value?.toString());
   const zapRunId = parsedValue.zapRunId;
   const stage = parsedValue.stage;
-  //
   const zapRunDetails = await prismaClient.zapRun.findFirst({
     where: {
       id: zapRunId,
