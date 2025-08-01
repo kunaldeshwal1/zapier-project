@@ -15,13 +15,15 @@ router.post("/", authMiddleware, async (req, res): Promise<any> => {
     });
   }
 
-  const zapId = await prismaClient.$transaction(async tx => {
+  const zapId = await prismaClient.$transaction(async (tx) => {
     const availableTrigger = await tx.availableTrigger.findUnique({
-      where: { id: parsedData.data.availableTriggerId }
+      where: { id: parsedData.data.availableTriggerId },
     });
 
     if (!availableTrigger) {
-      throw new Error(`AvailableTrigger with ID ${parsedData.data.availableTriggerId} does not exist`);
+      throw new Error(
+        `AvailableTrigger with ID ${parsedData.data.availableTriggerId} does not exist`
+      );
     }
     const zap = await tx.zap.create({
       data: {
@@ -31,36 +33,36 @@ router.post("/", authMiddleware, async (req, res): Promise<any> => {
           create: parsedData.data.actions.map((x, index) => ({
             actionId: x.availableActionId,
             sortingOrder: index,
-            metadata: x.actionMetadata
-          }))
+            metadata: x.actionMetadata,
+          })),
         },
         flow: {
           create: {
             node: body.flow.node,
-            edge: body.flow.edge
-          }
-        }
-      }
-    })
+            edge: body.flow.edge,
+          },
+        },
+      },
+    });
     const trigger = await tx.trigger.create({
       data: {
         triggerId: parsedData.data.availableTriggerId,
         zapId: zap.id,
-        name: availableTrigger.name  // Add the name from the availableTrigger
-      }
-    })
+        name: availableTrigger.name, // Add the name from the availableTrigger
+      },
+    });
     await tx.zap.update({
       where: {
-        id: zap.id
+        id: zap.id,
       },
       data: {
-        triggerId: trigger.id
-      }
-    })
+        triggerId: trigger.id,
+      },
+    });
     return zap.id;
-  })
-  return res.json({ zapId })
-})
+  });
+  return res.json({ zapId });
+});
 router.delete("/:zapId", authMiddleware, async (req, res): Promise<any> => {
   //@ts-ignore
   const id = req.id;
@@ -71,48 +73,48 @@ router.delete("/:zapId", authMiddleware, async (req, res): Promise<any> => {
     await prismaClient.$transaction(async (tx) => {
       const zap = await tx.zap.findFirst({
         where: {
-          id: zapId
-        }
-      })
+          id: zapId,
+        },
+      });
       if (!zap) {
-        throw new Error("No zap found")
+        throw new Error("No zap found");
       }
       await tx.zap.delete({
         where: {
-          id: zapId
-        }
-      })
-    })
+          id: zapId,
+        },
+      });
+    });
 
     return res.json({ message: "Zap deleted successfully" });
   } catch (error: any) {
     return res.status(400).json({
       message: "Failed to delete zap",
-      error: error.message
+      error: error.message,
     });
   }
-})
+});
 router.get("/", authMiddleware, async (req, res): Promise<any> => {
   //@ts-ignore
   const id = req.id;
   const zaps = await prismaClient.zap.findMany({
     where: {
-      userId: id
+      userId: id,
     },
     include: {
       actions: {
         include: {
-          type: true
-        }
+          type: true,
+        },
       },
       trigger: {
         include: {
-          type: true
-        }
-      }
-    }
-  })
-  return res.json({ zaps })
+          type: true,
+        },
+      },
+    },
+  });
+  return res.json({ zaps });
 });
 
 router.get("/:zapId", authMiddleware, async (req, res): Promise<any> => {
@@ -122,23 +124,23 @@ router.get("/:zapId", authMiddleware, async (req, res): Promise<any> => {
   const zap = await prismaClient.zap.findFirst({
     where: {
       id: zapId,
-      userId: id
+      userId: id,
     },
     include: {
       actions: {
         include: {
-          type: true
-        }
+          type: true,
+        },
       },
       trigger: {
         include: {
-          type: true
-        }
+          type: true,
+        },
       },
-      flow: true
-    }
-  })
+      flow: true,
+    },
+  });
 
-  return res.json({ zap })
+  return res.json({ zap });
 });
 export const zapRouter = router;
