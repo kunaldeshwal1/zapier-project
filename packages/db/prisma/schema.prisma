@@ -38,7 +38,7 @@ model Trigger {
   id        String           @id @default(uuid())
   zapId     String           @unique
   triggerId String
-  name      String           @default("Unnamed Trigger") // Add default value
+  name      String           @default("Unnamed Trigger") // Added default value
   metadata  Json             @default("{}")
   type      AvailableTrigger @relation(fields: [triggerId], references: [id])
   zap       Zap              @relation(fields: [zapId], references: [id], onDelete: Cascade)
